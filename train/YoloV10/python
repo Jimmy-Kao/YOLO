@@ -1,0 +1,23 @@
+from ultralytics import YOLO
+import datetime
+
+# 1. Generate run name with date-time stamp
+run_name = f"yolov10_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}"
+
+# 2. Load YOLOv10m model with pretrained weights
+model = YOLO("ultralytics/cfg/models/v10/yolov10m.yaml").load("yolov10m.pt")
+
+# 3. Train
+model.train(
+    data="../../datasets/visdrone_fisheye8k_all.yaml",  # dataset YAML
+    epochs=250,               # number of epochs
+    batch=3,                  # batch size
+    imgsz=640,                # image size
+    device=0,                 # GPU 0
+    save_period=1,            # save checkpoint every 1 epoch
+    name=run_name,            # experiment name
+    patience=50,              # early stopping patience
+    verbose=True,             # show details
+    lr0=0.005,                # initial learning rate
+    accumulate=11             # gradient accumulation steps
+)
