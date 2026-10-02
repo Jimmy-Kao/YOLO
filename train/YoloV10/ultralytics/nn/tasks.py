@@ -3,7 +3,6 @@
 import contextlib
 from copy import deepcopy
 from pathlib import Path
-from ultralytics.nn.modules.apam import APAM # 2025/7/27新增
 from ultralytics.nn.modules.cbam import CBAM # 2025/11/29新增
 from ultralytics.nn.modules.coord_att import CA, CoordAtt # 2025/11/29新增
 

@@ -17,11 +17,11 @@ Example:
     ```
 """
 
+from .apam import APAM
 from .block import (
     C1,
     C2,
     C3,
-    APAM, # added
     C3TR,
     DFL,
     SPP,

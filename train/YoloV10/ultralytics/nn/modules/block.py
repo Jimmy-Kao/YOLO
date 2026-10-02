@@ -38,45 +38,8 @@ __all__ = (
     "CBFuse",
     "CBLinear",
     "Silence",
-    "APAM",
 )
 
-"""
-class APAM(nn.Module):  # APAM block
-
-    def __init__(self, channels):
-        super(APAM, self).__init__()
-        self.conv1 = nn.Conv2d(channels, channels // 4, kernel_size=1)
-        self.conv2 = nn.Conv2d(channels // 4, channels, kernel_size=1)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        avg_pool = F.adaptive_avg_pool2d(x, 1)
-        x_attn = self.conv1(avg_pool)
-        x_attn = self.conv2(x_attn)
-        x_attn = self.sigmoid(x_attn)
-        return x * x_attn
-"""
-class APAM(nn.Module):  # APAM block 9/07 added
-    def __init__(self, channels, reduction=16):
-        super(APAM, self).__init__()
-        # Adaptive pooling to get global context
-        self.global_pool = nn.AdaptiveAvgPool2d(1)
-        # Channel attention
-        self.fc1 = nn.Conv2d(channels, channels // reduction, 1, bias=False)
-        self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(channels // reduction, channels, 1, bias=False)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        # Global context
-        y = self.global_pool(x)
-        y = self.fc1(y)
-        y = self.relu(y)
-        y = self.fc2(y)
-        y = self.sigmoid(y)
-        # Apply attention
-        return x * y
 
 class DFL(nn.Module):
     """
