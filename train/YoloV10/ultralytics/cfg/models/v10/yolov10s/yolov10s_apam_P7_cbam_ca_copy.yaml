@@ -1,0 +1,56 @@
+# Parameters
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  s: [0.33, 0.50, 1024]
+
+backbone:
+  # [from, repeats, module, args]
+
+  # Stage 0
+  - [-1, 1, Conv, [32, 3, 2]]                 # 0: Conv[3 → 32]
+  - [-1, 1, Conv, [64, 3, 2]]                 # 1: Conv[32 → 64]
+  - [-1, 1, C2f, [64, 64, 1, True]]           # 2: C2f[64 → 64]
+
+  - [-1, 1, CoordAtt, [64]]                  # 3: CoordAtt[64]
+
+  # Stage 1
+  - [-1, 1, Conv, [128, 3, 2]]               # 4: Conv[64 → 128]
+  - [-1, 2, C2f, [128, 128, 2, True]]        # 5: C2f[128 → 128]
+  - [-1, 1, CBAM, [128]]                     # 6: CBAM[128]
+
+  # Stage 2
+  - [-1, 1, SCDown, [256, 3, 2]]             # 7: SCDown[128 → 256]
+  - [-1, 2, C2f, [256, 256, 2, True]]        # 8: C2f[256 → 256]
+  - [-1, 1, APAM, [256]]                     # 9: APAM[256]
+
+  # Stage 3
+  - [-1, 1, SCDown, [512, 3, 2]]             # 10: SCDown[256 → 512]
+  - [-1, 1, C2fCIB, [512, 512, 1, True, True]] # 11: C2fCIB[512 → 512]
+  - [-1, 1, SPPF, [512, 5]]                  # 12: SPPF[512]
+  - [-1, 1, PSA, [512, 512]]                 # 13: PSA[512]
+
+
+head:
+  # P5 → P4
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]      # 14
+  - [[-1, 8], 1, Concat, [1]]                       # 15  (concat 512 + 256 = 768)
+  - [-1, 1, C2f, [768, 256, 1]]                     # 16
+
+  # P4 → P3
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]      # 17
+  - [[-1, 5], 1, Concat, [1]]                       # 18  (concat 256 + 128 = 384)
+  - [-1, 1, C2f, [384, 128, 1]]                     # 19
+
+  # P3 → P4 (upscaling branch)
+  - [-1, 1, Conv, [128, 3, 2]]                      # 20: reduces 128 → 128 and downsamples
+  - [[-1, 16], 1, Concat, [1]]                      # 21 (concat 128 + 256 = 384)
+  - [-1, 1, C2f, [384, 256, 1]]                     # 22
+
+  # P4 → P5
+  - [-1, 1, SCDown, [256, 3, 2]]                    # 23
+  - [[-1, 13], 1, Concat, [1]]                      # 24 (concat 256 + 512 = 768)
+  - [-1, 1, C2fCIB, [768, 512, 1, True, True]]      # 25
+
+  # Detection head
+  - [[19, 22, 25], 1, v10Detect, [nc]]              # 26
